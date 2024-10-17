@@ -16,9 +16,11 @@ def text_to_image(text, font_size=40, image_width=400, image_height=200, text_co
         font = ImageFont.load_default()
 
     # Calculate the size and position of the text
-    text_width, text_height = draw.textsize(text, font=font)
+    text_bbox = draw.textbbox((0, 0), text, font=font)  # Get bounding box for the text
+    text_width = text_bbox[2] - text_bbox[0]  # Width = right - left
+    text_height = text_bbox[3] - text_bbox[1]  # Height = bottom - top
     position = ((image_width - text_width) // 2, (image_height - text_height) // 2)
-    
+
     # Add the text to the image
     draw.text(position, text, fill=text_color, font=font)
     
