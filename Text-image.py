@@ -1,33 +1,28 @@
-from PIL import Image, ImageDraw, ImageFont
+# Use a pipeline as a high-level helper
+from transformers import pipeline
 
-def text_to_image(text, font_size=40, image_width=400, image_height=200, text_color="black", background_color="white"):
-    # Create a blank image with the specified background color
-    img = Image.new('RGB', (image_width, image_height), color=background_color)
-    
-    # Initialize the drawing context
-    draw = ImageDraw.Draw(img)
-    
-    # Load a font
-    try:
-        # Attempt to use a TrueType font
-        font = ImageFont.truetype("arial.ttf", font_size)  # Adjust the font path if necessary
-    except IOError:
-        # Use a default font if the specified font is not found
-        font = ImageFont.load_default()
+pipe = pipeline("image-to-text", model="microsoft/trocr-base-handwritten")
 
-    # Calculate the size and position of the text
-    text_bbox = draw.textbbox((0, 0), text, font=font)  # Get bounding box for the text
-    text_width = text_bbox[2] - text_bbox[0]  # Width = right - left
-    text_height = text_bbox[3] - text_bbox[1]  # Height = bottom - top
-    position = ((image_width - text_width) // 2, (image_height - text_height) // 2)
+ # Load model directly
+from transformers import AutoTokenizer, VisionEncoderDecoderModel 
 
-    # Add the text to the image
-    draw.text(position, text, fill=text_color, font=font)
-    
-    # Save the image
-    img.save("text_image.png")
-    print("Image saved as 'text_image.png'")
+tokenizer = AutoTokenizer.from_pretrained("microsoft/trocr-base-handwritten", clean_up_tokenization_spaces=True) # Set clean_up_tokenization_spaces to True
+model = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-base-handwritten")
 
-# Example usage
-text = "Hello, World!"
-text_to_image(text)
+from transformers import TrOCRProcessor, VisionEncoderDecoderModel, AutoTokenizer
+from PIL import Image
+
+# load image from the IAM database
+image = Image.open(input("url")).convert("RGB") 
+
+# Explicitly set clean_up_tokenization_spaces to False to avoid future warnings
+tokenizer = AutoTokenizer.from_pretrained("microsoft/trocr-base-handwritten", clean_up_tokenization_spaces=False) 
+model = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-base-handwritten")
+
+processor = TrOCRProcessor.from_pretrained('microsoft/trocr-base-handwritten')
+pixel_values = processor(images=image, return_tensors="pt").pixel_values
+
+generated_ids = model.generate(pixel_values)
+generated_text = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
+
+print(generated_text) # Print the generated text
