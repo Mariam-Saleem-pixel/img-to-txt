@@ -1,2 +1,4 @@
-transformer
-PIL
+streamlit
+transformers
+pillow
+requests
